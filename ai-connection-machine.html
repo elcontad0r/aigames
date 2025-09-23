@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Connection Machine - Discover How AI Really Works</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: #0f0f1e;
+            border-radius: 30px;
+            max-width: 1200px;
+            width: 100%;
+            padding: 30px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .subtitle {
+            color: #8892b0;
+            font-size: 1em;
+        }
+
+        .score-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .score-item {
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            padding: 12px 25px;
+            border-radius: 12px;
+        }
+
+        .score-label {
+            color: #8892b0;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            color: #00d2ff;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .mystery-card {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid #00d2ff;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .mystery-title {
+            color: #00d2ff;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .mystery-question {
+            color: white;
+            font-size: 1.4em;
+            font-weight: 300;
+        }
+
+        .connection-board {
+            background: rgba(255,255,255,0.03);
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .board-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 60px;
+            align-items: start;
+        }
+
+        .observations-column, .explanations-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .column-header {
+            color: #8892b0;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .node {
+            background: rgba(255,255,255,0.08);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .node:hover {
+            background: rgba(255,255,255,0.12);
+            transform: scale(1.02);
+        }
+
+        .node.selected {
+            border-color: #00d2ff;
+            background: rgba(0, 210, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
+        }
+
+        .node.connected {
+            border-color: #4caf50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .node.wrong {
+            animation: shake 0.5s ease;
+            border-color: #ff5252;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .node-content {
+            color: white;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .node-icon {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            display: block;
+            text-align: center;
+        }
+
+        .connection-point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #00d2ff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .left-point {
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .right-point {
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .connection-point:hover {
+            transform: translateY(-50%) scale(1.3);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
+        }
+
+        .connection-line {
+            position: absolute;
+            height: 3px;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            transform-origin: left center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .connection-line.active {
+            opacity: 1;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .connection-line.correct {
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            height: 4px;
+        }
+
+        .connection-middle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .connect-button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #00d2ff, #3a7bd5);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+        }
+
+        .connect-button:enabled {
+            opacity: 1;
+        }
+
+        .connect-button:hover:enabled {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.4);
+        }
+
+        .reset-button {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            color: #8892b0;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-button:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .success-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .success-content {
+            background: #1a1a2e;
+            border-radius: 25px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            animation: bounceIn 0.5s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .success-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .success-title {
+            color: #4caf50;
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .success-message {
+            color: white;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .next-button {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #4caf50, #8bc34a);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .next-button:hover {
+            transform: scale(1.05);
+        }
+
+        .hint-system {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .hint-button {
+            padding: 10px 25px;
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid #ff9800;
+            color: #ff9800;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .hint-button:hover {
+            background: rgba(255, 152, 0, 0.3);
+        }
+
+        .hint-text {
+            color: #ff9800;
+            margin-top: 15px;
+            font-size: 0.95em;
+            min-height: 20px;
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .drawing-line {
+            stroke: #00d2ff;
+            stroke-width: 3;
+            fill: none;
+            stroke-dasharray: 5, 5;
+            animation: dash 1s linear infinite;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -10;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .board-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .connection-middle {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>AI Connection Machine</h1>
+            <p class="subtitle">Connect what you see with how AI actually works!</p>
+        </div>
+
+        <div class="score-bar">
+            <div class="score-item">
+                <div class="score-label">Mysteries Solved</div>
+                <div class="score-value" id="mysteries">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">Connections</div>
+                <div class="score-value" id="connections">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">Score</div>
+                <div class="score-value" id="score">0</div>
+            </div>
+        </div>
+
+        <div class="mystery-card">
+            <div class="mystery-title">Current Mystery</div>
+            <div class="mystery-question" id="mystery-question">
+                How does AI write essays that sound so human?
+            </div>
+        </div>
+
+        <div class="connection-board">
+            <svg id="connection-svg"></svg>
+            <div class="board-grid">
+                <div class="observations-column">
+                    <div class="column-header">What I See</div>
+                    <div id="observations-container"></div>
+                </div>
+
+                <div class="connection-middle">
+                    <button class="connect-button" id="connect-btn" onclick="checkConnection()" disabled>
+                        Connect!
+                    </button>
+                    <button class="reset-button" onclick="resetConnections()">
+                        Clear
+                    </button>
+                </div>
+
+                <div class="explanations-column">
+                    <div class="column-header">What's Actually Happening</div>
+                    <div id="explanations-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hint-system">
+            <button class="hint-button" onclick="getHint()">
+                Need a Hint? (-50 points)
+            </button>
+            <div class="hint-text" id="hint-text"></div>
+        </div>
+    </div>
+
+    <div class="success-modal" id="success-modal">
+        <div class="success-content">
+            <div class="success-icon">✨</div>
+            <div class="success-title">Mystery Solved!</div>
+            <div class="success-message" id="success-message">
+                You discovered how AI really works! It's not magic, it's patterns and statistics.
+            </div>
+            <button class="next-button" onclick="nextMystery()">
+                Next Mystery →
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentMystery = 0;
+        let selectedObservation = null;
+        let selectedExplanation = null;
+        let mysteriesSolved = 0;
+        let totalConnections = 0;
+        let totalScore = 0;
+        let currentConnections = [];
+        let drawingLine = null;
+
+        const mysteries = [
+            {
+                question: "How does AI write essays that sound so human?",
+                observations: [
+                    { id: 'o1', text: "It writes complete paragraphs instantly", icon: "⚡" },
+                    { id: 'o2', text: "Sometimes repeats similar phrases", icon: "🔄" },
+                    { id: 'o3', text: "Knows about almost any topic", icon: "🌍" }
+                ],
+                explanations: [
+                    { id: 'e1', text: "Predicts next likely word based on patterns", icon: "🎲" },
+                    { id: 'e2', text: "Common phrases appear most in training data", icon: "📊" },
+                    { id: 'e3', text: "Trained on billions of web pages and books", icon: "📚" }
+                ],
+                connections: [
+                    { from: 'o1', to: 'e1' },
+                    { from: 'o2', to: 'e2' },
+                    { from: 'o3', to: 'e3' }
+                ],
+                successMessage: "AI isn't thinking - it's predicting what words usually come next based on patterns it learned!"
+            },
+            {
+                question: "Why does AI sometimes make up facts that sound real?",
+                observations: [
+                    { id: 'o1', text: "Creates fake quotes that sound believable", icon: "💬" },
+                    { id: 'o2', text: "Invents plausible-sounding statistics", icon: "📈" },
+                    { id: 'o3', text: "Mixes real facts with false ones", icon: "🎭" }
+                ],
+                explanations: [
+                    { id: 'e1', text: "Generates what 'sounds right' statistically", icon: "🎯" },
+                    { id: 'e2', text: "No fact-checking, just pattern matching", icon: "⚖️" },
+                    { id: 'e3', text: "Combines real patterns in new ways", icon: "🧩" }
+                ],
+                connections: [
+                    { from: 'o1', to: 'e1' },
+                    { from: 'o2', to: 'e2' },
+                    { from: 'o3', to: 'e3' }
+                ],
+                successMessage: "AI doesn't 'know' facts - it creates text that statistically fits the pattern, even if it's false!"
+            },
+            {
+                question: "How does AI create images from just text descriptions?",
+                observations: [
+                    { id: 'o1', text: "Understands 'cat wearing hat' perfectly", icon: "🎨" },
+                    { id: 'o2', text: "Struggles with specific details like fingers", icon: "✋" },
+                    { id: 'o3', text: "Creates different image each time", icon: "🎲" }
+                ],
+                explanations: [
+                    { id: 'e1', text: "Learned which pixels appear near words", icon: "🔤" },
+                    { id: 'e2', text: "Rare in training data = harder to generate", icon: "📉" },
+                    { id: 'e3', text: "Adds random noise then removes it gradually", icon: "🌫️" }
+                ],
+                connections: [
+                    { from: 'o1', to: 'e1' },
+                    { from: 'o2', to: 'e2' },
+                    { from: 'o3', to: 'e3' }
+                ],
+                successMessage: "AI learned which pixels usually appear with which words - it's sophisticated pattern matching, not imagination!"
+            },
+            {
+                question: "Why does AI give different answers to the same question?",
+                observations: [
+                    { id: 'o1', text: "Same prompt, different response each time", icon: "🔀" },
+                    { id: 'o2', text: "Some responses better than others", icon: "📊" },
+                    { id: 'o3', text: "Can be more or less creative on demand", icon: "🎨" }
+                ],
+                explanations: [
+                    { id: 'e1', text: "Randomly samples from probable words", icon: "🎰" },
+                    { id: 'e2', text: "Some word paths lead to better content", icon: "🗺️" },
+                    { id: 'e3', text: "Temperature setting controls randomness", icon: "🌡️" }
+                ],
+                connections: [
+                    { from: 'o1', to: 'e1' },
+                    { from: 'o2', to: 'e2' },
+                    { from: 'o3', to: 'e3' }
+                ],
+                successMessage: "AI picks randomly from likely next words - like rolling dice weighted by probability!"
+            },
+            {
+                question: "How can AI code and solve math problems?",
+                observations: [
+                    { id: 'o1', text: "Writes working code in any language", icon: "💻" },
+                    { id: 'o2', text: "Makes logical errors in complex problems", icon: "❌" },
+                    { id: 'o3', text: "Shows step-by-step solutions", icon: "📝" }
+                ],
+                explanations: [
+                    { id: 'e1', text: "Saw millions of code examples online", icon: "🌐" },
+                    { id: 'e2', text: "Patterns break down in novel situations", icon: "🔧" },
+                    { id: 'e3', text: "Mimics explanation formats from training", icon: "📖" }
+                ],
+                connections: [
+                    { from: 'o1', to: 'e1' },
+                    { from: 'o2', to: 'e2' },
+                    { from: 'o3', to: 'e3' }
+                ],
+                successMessage: "AI learned code patterns from GitHub and math from textbooks - it's pattern matching, not true reasoning!"
+            }
+        ];
+
+        function initMystery() {
+            const mystery = mysteries[currentMystery];
+            document.getElementById('mystery-question').textContent = mystery.question;
+            
+            // Clear previous
+            currentConnections = [];
+            selectedObservation = null;
+            selectedExplanation = null;
+            document.getElementById('connect-btn').disabled = true;
+            
+            // Load observations
+            const obsContainer = document.getElementById('observations-container');
+            obsContainer.innerHTML = '';
+            mystery.observations.forEach(obs => {
+                const node = createNode(obs, 'observation');
+                obsContainer.appendChild(node);
+            });
+            
+            // Load explanations
+            const expContainer = document.getElementById('explanations-container');
+            expContainer.innerHTML = '';
+            mystery.explanations.forEach(exp => {
+                const node = createNode(exp, 'explanation');
+                expContainer.appendChild(node);
+            });
+        }
+
+        function createNode(data, type) {
+            const node = document.createElement('div');
+            node.className = 'node';
+            node.dataset.id = data.id;
+            node.dataset.type = type;
+            
+            node.innerHTML = `
+                <div class="node-icon">${data.icon || '❓'}</div>
+                <div class="node-content">${data.text}</div>
+                <div class="connection-point ${type === 'observation' ? 'left-point' : 'right-point'}"></div>
+            `;
+            
+            node.onclick = () => selectNode(node, type);
+            return node;
+        }
+
+        function selectNode(node, type) {
+            if (node.classList.contains('connected')) return;
+            
+            // Deselect previous of same type
+            document.querySelectorAll(`.node[data-type="${type}"]`).forEach(n => {
+                if (!n.classList.contains('connected')) {
+                    n.classList.remove('selected');
+                }
+            });
+            
+            node.classList.add('selected');
+            
+            if (type === 'observation') {
+                selectedObservation = node.dataset.id;
+            } else {
+                selectedExplanation = node.dataset.id;
+            }
+            
+            // Enable connect button if both selected
+            document.getElementById('connect-btn').disabled = 
+                !(selectedObservation && selectedExplanation);
+            
+            updateDrawing();
+        }
+
+        function updateDrawing() {
+            const svg = document.getElementById('connection-svg');
+            
+            // Remove temporary line
+            const tempLine = svg.querySelector('.temp-line');
+            if (tempLine) tempLine.remove();
+            
+            if (selectedObservation && selectedExplanation) {
+                const obsNode = document.querySelector(`[data-id="${selectedObservation}"]`);
+                const expNode = document.querySelector(`[data-id="${selectedExplanation}"]`);
+                
+                if (obsNode && expNode) {
+                    drawTempConnection(obsNode, expNode);
+                }
+            }
+        }
+
+        function drawTempConnection(fromNode, toNode) {
+            const svg = document.getElementById('connection-svg');
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            
+            const fromRect = fromNode.getBoundingClientRect();
+            const toRect = toNode.getBoundingClientRect();
+            const containerRect = svg.parentElement.getBoundingClientRect();
+            
+            line.setAttribute('x1', fromRect.right - containerRect.left);
+            line.setAttribute('y1', fromRect.top + fromRect.height/2 - containerRect.top);
+            line.setAttribute('x2', toRect.left - containerRect.left);
+            line.setAttribute('y2', toRect.top + toRect.height/2 - containerRect.top);
+            line.setAttribute('class', 'drawing-line temp-line');
+            
+            svg.appendChild(line);
+        }
+
+        function checkConnection() {
+            if (!selectedObservation || !selectedExplanation) return;
+            
+            const mystery = mysteries[currentMystery];
+            const isCorrect = mystery.connections.some(conn => 
+                conn.from === selectedObservation && conn.to === selectedExplanation
+            );
+            
+            const obsNode = document.querySelector(`[data-id="${selectedObservation}"]`);
+            const expNode = document.querySelector(`[data-id="${selectedExplanation}"]`);
+            
+            if (isCorrect) {
+                // Mark as connected
+                obsNode.classList.remove('selected');
+                obsNode.classList.add('connected');
+                expNode.classList.remove('selected');
+                expNode.classList.add('connected');
+                
+                // Draw permanent connection
+                drawPermanentConnection(obsNode, expNode);
+                
+                // Add to connections
+                currentConnections.push({ from: selectedObservation, to: selectedExplanation });
+                totalConnections++;
+                totalScore += 100;
+                
+                // Check if mystery solved
+                if (currentConnections.length === mystery.connections.length) {
+                    solveMystery();
+                }
+            } else {
+                // Wrong connection
+                obsNode.classList.add('wrong');
+                expNode.classList.add('wrong');
+                totalScore = Math.max(0, totalScore - 25);
+                
+                setTimeout(() => {
+                    obsNode.classList.remove('wrong');
+                    expNode.classList.remove('wrong');
+                }, 500);
+            }
+            
+            // Reset selections
+            selectedObservation = null;
+            selectedExplanation = null;
+            document.getElementById('connect-btn').disabled = true;
+            
+            // Clear temp line
+            const tempLine = document.querySelector('.temp-line');
+            if (tempLine) tempLine.remove();
+            
+            updateStats();
+        }
+
+        function drawPermanentConnection(fromNode, toNode) {
+            const svg = document.getElementById('connection-svg');
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            
+            const fromRect = fromNode.getBoundingClientRect();
+            const toRect = toNode.getBoundingClientRect();
+            const containerRect = svg.parentElement.getBoundingClientRect();
+            
+            line.setAttribute('x1', fromRect.right - containerRect.left);
+            line.setAttribute('y1', fromRect.top + fromRect.height/2 - containerRect.top);
+            line.setAttribute('x2', toRect.left - containerRect.left);
+            line.setAttribute('y2', toRect.top + toRect.height/2 - containerRect.top);
+            line.setAttribute('class', 'connection-line correct active');
+            line.style.opacity = '1';
+            
+            svg.appendChild(line);
+        }
+
+        function solveMystery() {
+            mysteriesSolved++;
+            totalScore += 500;
+            
+            const mystery = mysteries[currentMystery];
+            document.getElementById('success-message').textContent = mystery.successMessage;
+            document.getElementById('success-modal').style.display = 'flex';
+            
+            updateStats();
+        }
+
+        function nextMystery() {
+            document.getElementById('success-modal').style.display = 'none';
+            
+            // Clear SVG
+            document.getElementById('connection-svg').innerHTML = '';
+            
+            currentMystery = (currentMystery + 1) % mysteries.length;
+            initMystery();
+        }
+
+        function resetConnections() {
+            currentConnections = [];
+            selectedObservation = null;
+            selectedExplanation = null;
+            
+            // Clear all connections
+            document.querySelectorAll('.node').forEach(node => {
+                node.classList.remove('selected', 'connected');
+            });
+            
+            // Clear SVG
+            document.getElementById('connection-svg').innerHTML = '';
+            
+            document.getElementById('connect-btn').disabled = true;
+        }
+
+        function getHint() {
+            totalScore = Math.max(0, totalScore - 50);
+            
+            const mystery = mysteries[currentMystery];
+            const unconnected = mystery.connections.filter(conn => 
+                !currentConnections.some(c => c.from === conn.from && c.to === conn.to)
+            );
+            
+            if (unconnected.length > 0) {
+                const hint = unconnected[0];
+                const obsNode = document.querySelector(`[data-id="${hint.from}"]`);
+                const expNode = document.querySelector(`[data-id="${hint.to}"]`);
+                
+                document.getElementById('hint-text').textContent = 
+                    `Try connecting "${obsNode.querySelector('.node-content').textContent}" with something about patterns or probability!`;
+            }
+            
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('mysteries').textContent = mysteriesSolved;
+            document.getElementById('connections').textContent = totalConnections;
+            document.getElementById('score').textContent = totalScore;
+        }
+
+        // Initialize
+        initMystery();
+        updateStats();
+    </script>
+</body>
+</html>

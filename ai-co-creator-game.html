@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Co-Creator - Design Together with AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #FC466B 0%, #3F5EFB 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: #0a0e27;
+            border-radius: 20px;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 25px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #FC466B, #3F5EFB);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .subtitle {
+            color: #8892b0;
+            font-size: 1em;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-label {
+            color: #8892b0;
+            font-size: 0.75em;
+            margin-bottom: 3px;
+        }
+
+        .stat-value {
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .project-selector {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .project-title {
+            color: #FC466B;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .project-description {
+            color: #8892b0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .ingredients-bank {
+            background: rgba(255,255,255,0.08);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .ingredients-header {
+            color: #ffd93d;
+            font-size: 1em;
+            margin-bottom: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .ingredients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .chip {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 8px 12px;
+            color: white;
+            cursor: grab;
+            transition: all 0.3s ease;
+            font-size: 0.85em;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chip:hover {
+            transform: translateY(-3px);
+            background: rgba(255,255,255,0.15);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .chip.theme {
+            border-color: #FC466B;
+            background: rgba(252, 70, 107, 0.15);
+        }
+
+        .chip.constraint {
+            border-color: #ffd93d;
+            background: rgba(255, 217, 61, 0.15);
+        }
+
+        .chip.vibe {
+            border-color: #6bcf7f;
+            background: rgba(107, 207, 127, 0.15);
+        }
+
+        .chip.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .chip.used {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: scale(0.95);
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 60px 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .human-side, .ai-side {
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            min-height: 350px;
+        }
+
+        .human-side {
+            border-color: #FC466B;
+        }
+
+        .ai-side {
+            border-color: #3F5EFB;
+        }
+
+        .side-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .side-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .human-side .side-avatar {
+            background: linear-gradient(135deg, #FC466B, #ff6b9d);
+        }
+
+        .ai-side .side-avatar {
+            background: linear-gradient(135deg, #3F5EFB, #766bff);
+        }
+
+        .side-info {
+            flex: 1;
+        }
+
+        .side-title {
+            color: white;
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .side-status {
+            color: #8892b0;
+            font-size: 0.8em;
+            margin-top: 2px;
+        }
+
+        .creativity-meter {
+            width: 100px;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .creativity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FC466B, #3F5EFB);
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        .drop-zone {
+            background: rgba(0,0,0,0.4);
+            border: 3px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.active {
+            border-color: #FC466B;
+            background: rgba(252, 70, 107, 0.1);
+        }
+
+        .drop-zone-text {
+            color: #8892b0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        .dropped-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .dropped-chip {
+            background: rgba(252, 70, 107, 0.2);
+            border: 2px solid #FC466B;
+            border-radius: 10px;
+            padding: 10px;
+            color: white;
+            font-size: 0.9em;
+        }
+
+        .collaboration-bridge {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sync-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FC466B, #3F5EFB);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            color: white;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .sync-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(252, 70, 107, 0.4);
+        }
+
+        .sync-button.active {
+            animation: pulse 0.5s infinite;
+        }
+
+        .sync-button:disabled {
+            background: rgba(255,255,255,0.1);
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.8; }
+        }
+
+        .sync-status {
+            color: #8892b0;
+            font-size: 0.75em;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .ai-canvas {
+            background: rgba(0,0,0,0.4);
+            border-radius: 12px;
+            padding: 15px;
+            min-height: 150px;
+            color: white;
+        }
+
+        .canvas-placeholder {
+            color: #8892b0;
+            text-align: center;
+            padding: 30px 10px;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+
+        .creation-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .creation-item.human-contributed {
+            border-left-color: #FC466B;
+        }
+
+        .creation-item.ai-contributed {
+            border-left-color: #3F5EFB;
+        }
+
+        .creation-item.collaborative {
+            border-left-color: #6bcf7f;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .item-title {
+            font-weight: bold;
+            color: white;
+            font-size: 0.9em;
+        }
+
+        .item-price {
+            color: #ffd93d;
+            font-size: 0.85em;
+        }
+
+        .item-description {
+            color: #8892b0;
+            font-size: 0.8em;
+            line-height: 1.3;
+        }
+
+        .feedback-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .feedback-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8em;
+        }
+
+        .feedback-btn:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .collaborate-btn {
+            background: linear-gradient(135deg, #FC466B, #3F5EFB);
+        }
+
+        .collaborate-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(252, 70, 107, 0.3);
+        }
+
+        .collaborate-btn:disabled {
+            background: rgba(255,255,255,0.1);
+            cursor: not-allowed;
+            color: #8892b0;
+        }
+
+        .finalize-btn {
+            background: linear-gradient(135deg, #6bcf7f, #4ade80);
+        }
+
+        .reset-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .tutorial-box {
+            background: #1a1a2e;
+            border: 2px solid #FC466B;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            text-align: center;
+            color: white;
+        }
+
+        .tutorial-box h2 {
+            color: #FC466B;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .tutorial-box p {
+            color: #8892b0;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+        }
+
+        .tutorial-box button {
+            padding: 12px 35px;
+            background: linear-gradient(135deg, #FC466B, #3F5EFB);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .workspace {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .collaboration-bridge {
+                transform: rotate(90deg);
+                margin: 20px 0;
+            }
+
+            .ingredients-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>🤝 AI Co-Creator</h1>
+            <p class="subtitle">Design amazing things together - You bring creativity, AI brings possibilities!</p>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-label">Harmony</div>
+                <div class="stat-value" id="harmony">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Ideas</div>
+                <div class="stat-value" id="ideas">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Iterations</div>
+                <div class="stat-value" id="iterations">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Projects</div>
+                <div class="stat-value" id="projects">0</div>
+            </div>
+        </div>
+
+        <div class="project-selector">
+            <div class="project-title">🎁 Project: Birthday Party Shopping List</div>
+            <div class="project-description">
+                Create the perfect shopping list for a 10-year-old's birthday party. Work with AI to combine creativity and practicality!
+            </div>
+        </div>
+
+        <div class="ingredients-bank">
+            <div class="ingredients-header">🎨 Drag These Creative Ingredients to Your Canvas Below ↓</div>
+            <div class="ingredients-grid">
+                <div class="chip theme" draggable="true" data-type="theme" data-value="Space Adventure">
+                    🚀 Space Adventure
+                </div>
+                <div class="chip theme" draggable="true" data-type="theme" data-value="Retro Arcade">
+                    🕹️ Retro Arcade
+                </div>
+                <div class="chip theme" draggable="true" data-type="theme" data-value="Dinosaur Discovery">
+                    🦕 Dinosaur
+                </div>
+                <div class="chip constraint" draggable="true" data-type="constraint" data-value="Budget: $200">
+                    💰 Budget: $200
+                </div>
+                <div class="chip constraint" draggable="true" data-type="constraint" data-value="20 Guests">
+                    👥 20 Guests
+                </div>
+                <div class="chip constraint" draggable="true" data-type="constraint" data-value="Indoor Party">
+                    🏠 Indoor Party
+                </div>
+                <div class="chip vibe" draggable="true" data-type="vibe" data-value="Educational Fun">
+                    🧠 Educational
+                </div>
+                <div class="chip vibe" draggable="true" data-type="vibe" data-value="High Energy">
+                    ⚡ High Energy
+                </div>
+                <div class="chip vibe" draggable="true" data-type="vibe" data-value="Photo-Worthy">
+                    📸 Photo-Worthy
+                </div>
+            </div>
+        </div>
+
+        <div class="workspace">
+            <div class="human-side">
+                <div class="side-header">
+                    <div class="side-avatar">👤</div>
+                    <div class="side-info">
+                        <div class="side-title">You</div>
+                        <div class="side-status">Creative Director</div>
+                    </div>
+                    <div class="creativity-meter">
+                        <div class="creativity-fill" id="human-creativity"></div>
+                    </div>
+                </div>
+
+                <div class="drop-zone" id="human-drop-zone">
+                    <div class="drop-zone-text" id="drop-zone-text">
+                        Drop your creative choices here!<br>
+                        <small>(Themes, constraints, vibes)</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collaboration-bridge">
+                <button class="sync-button" id="sync-button" onclick="collaborate()" disabled title="Add ingredients first, then click to collaborate!">
+                    ⚡
+                </button>
+                <div class="sync-status" id="sync-status">Add ideas<br>to start</div>
+            </div>
+
+            <div class="ai-side">
+                <div class="side-header">
+                    <div class="side-avatar">🤖</div>
+                    <div class="side-info">
+                        <div class="side-title">AI Assistant</div>
+                        <div class="side-status" id="ai-status">Waiting for input...</div>
+                    </div>
+                    <div class="creativity-meter">
+                        <div class="creativity-fill" id="ai-creativity"></div>
+                    </div>
+                </div>
+
+                <div class="ai-canvas" id="ai-canvas">
+                    <div class="canvas-placeholder">
+                        AI suggestions will appear here<br>
+                        <small>(Click the ⚡ button after adding your ideas!)</small>
+                    </div>
+                </div>
+
+                <div class="feedback-buttons hidden" id="feedback-section">
+                    <button class="feedback-btn" onclick="giveFeedback('love')">
+                        😍 Love it!
+                    </button>
+                    <button class="feedback-btn" onclick="giveFeedback('adjust')">
+                        🤔 Adjust
+                    </button>
+                    <button class="feedback-btn" onclick="giveFeedback('different')">
+                        🔄 Different
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <button class="action-btn collaborate-btn" id="collaborate-btn" onclick="collaborate()" disabled>
+                🎨 Create Together! (Or click ⚡ above)
+            </button>
+            <button class="action-btn finalize-btn hidden" id="finalize-btn" onclick="finalize()">
+                ✨ Finalize List
+            </button>
+            <button class="action-btn reset-btn" onclick="reset()">
+                🔄 Start Over
+            </button>
+        </div>
+    </div>
+
+    <div class="tutorial-overlay" id="tutorial">
+        <div class="tutorial-box">
+            <h2>🤝 Welcome to AI Co-Creator!</h2>
+            <p><strong>You're not competing with AI - you're creating WITH it!</strong></p>
+            <p>How to collaborate:<br>
+            1. Drag creative ingredients from the top to YOUR canvas<br>
+            2. Click the ⚡ lightning bolt to collaborate<br>
+            3. Give feedback to refine the creation<br>
+            4. Watch your ideas blend with AI's capabilities!</p>
+            <p>The goal: Create something neither of you could make alone! 🎨</p>
+            <button onclick="startGame()">Let's Create! 🚀</button>
+        </div>
+    </div>
+
+    <script>
+        let userInputs = [];
+        let iterations = 0;
+        let ideasCombined = 0;
+        let projectsCompleted = 0;
+        let currentHarmony = 0;
+        let draggedElement = null;
+
+        const aiSuggestions = {
+            'Space Adventure': [
+                { title: 'Galaxy Projector Light', price: '$35', desc: 'Transform the room into a planetarium', type: 'ai' },
+                { title: 'Astronaut Ice Cream Pack', price: '$25', desc: '30 packs of freeze-dried treats', type: 'ai' },
+                { title: 'DIY Rocket Building Kits', price: '$40', desc: '10 kits for party activity', type: 'collaborative' },
+                { title: 'Space-themed Plates & Cups', price: '$20', desc: 'Service for 20 with planets design', type: 'ai' }
+            ],
+            'Retro Arcade': [
+                { title: 'Mini Arcade Game Prizes', price: '$30', desc: 'Handheld games as party favors', type: 'ai' },
+                { title: 'Pixel Art Cookie Decorating', price: '$25', desc: 'Supplies for DIY 8-bit cookies', type: 'collaborative' },
+                { title: 'Neon Glow Sticks Bundle', price: '$15', desc: 'Create that arcade ambiance', type: 'ai' },
+                { title: 'High Score Banner Kit', price: '$20', desc: 'Customizable leaderboard decoration', type: 'ai' }
+            ],
+            'Dinosaur Discovery': [
+                { title: 'Fossil Dig Excavation Kit', price: '$45', desc: 'Sand table with hidden fossils', type: 'collaborative' },
+                { title: 'Dinosaur Mask Making Station', price: '$30', desc: 'Craft supplies for 20 masks', type: 'ai' },
+                { title: 'Jurassic Jungle Backdrop', price: '$25', desc: 'Photo booth prehistoric scene', type: 'ai' },
+                { title: 'Dino Egg Hunt Supplies', price: '$20', desc: 'Eggs with surprise toys inside', type: 'ai' }
+            ]
+        };
+
+        function startGame() {
+            document.getElementById('tutorial').classList.add('hidden');
+        }
+
+        // Drag and drop setup
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('dragstart', (e) => {
+                if (chip.classList.contains('used')) {
+                    e.preventDefault();
+                    return;
+                }
+                draggedElement = e.target;
+                e.target.classList.add('dragging');
+            });
+
+            chip.addEventListener('dragend', (e) => {
+                e.target.classList.remove('dragging');
+            });
+        });
+
+        const dropZone = document.getElementById('human-drop-zone');
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('active');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('active');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            
+            if (draggedElement && !draggedElement.classList.contains('used')) {
+                const type = draggedElement.dataset.type;
+                const value = draggedElement.dataset.value;
+                
+                userInputs.push({ type, value, text: draggedElement.textContent });
+                draggedElement.classList.add('used');
+                
+                // Update drop zone
+                if (userInputs.length === 1) {
+                    dropZone.innerHTML = '<div class="dropped-items"></div>';
+                }
+                
+                const droppedItems = dropZone.querySelector('.dropped-items') || dropZone;
+                const droppedChip = document.createElement('div');
+                droppedChip.className = 'dropped-chip';
+                droppedChip.textContent = draggedElement.textContent;
+                droppedItems.appendChild(droppedChip);
+                
+                // Update creativity meter
+                const fillPercent = Math.min(userInputs.length * 25, 100);
+                document.getElementById('human-creativity').style.width = fillPercent + '%';
+                
+                // Enable buttons
+                if (userInputs.length > 0) {
+                    document.getElementById('collaborate-btn').disabled = false;
+                    document.getElementById('sync-button').disabled = false;
+                    document.getElementById('sync-status').innerHTML = 'Click to<br>collaborate!';
+                }
+            }
+        });
+
+        function collaborate() {
+            if (userInputs.length === 0) return;
+            
+            // Disable buttons during generation
+            document.getElementById('collaborate-btn').disabled = true;
+            document.getElementById('sync-button').disabled = true;
+            
+            iterations++;
+            ideasCombined += userInputs.length;
+            
+            // Update status
+            document.getElementById('ai-status').textContent = 'Analyzing your vision...';
+            document.getElementById('sync-status').innerHTML = 'Syncing...';
+            document.getElementById('sync-button').classList.add('active');
+            
+            setTimeout(() => {
+                // Generate AI suggestions
+                const aiCanvas = document.getElementById('ai-canvas');
+                aiCanvas.innerHTML = '';
+                
+                // Get suggestions based on theme
+                const theme = userInputs.find(i => i.type === 'theme');
+                const suggestions = theme ? aiSuggestions[theme.value] : aiSuggestions['Space Adventure'];
+                
+                suggestions.forEach((item, index) => {
+                    setTimeout(() => {
+                        const suggestionItem = document.createElement('div');
+                        suggestionItem.className = `creation-item ${item.type}-contributed`;
+                        suggestionItem.innerHTML = `
+                            <div class="item-header">
+                                <div class="item-title">${item.title}</div>
+                                <div class="item-price">${item.price}</div>
+                            </div>
+                            <div class="item-description">${item.desc}</div>
+                        `;
+                        aiCanvas.appendChild(suggestionItem);
+                        
+                        // Update AI creativity meter
+                        const fillPercent = Math.min((index + 1) * 25, 100);
+                        document.getElementById('ai-creativity').style.width = fillPercent + '%';
+                    }, index * 300);
+                });
+                
+                // Show feedback buttons
+                setTimeout(() => {
+                    document.getElementById('feedback-section').classList.remove('hidden');
+                    document.getElementById('finalize-btn').classList.remove('hidden');
+                    document.getElementById('ai-status').textContent = 'Ideas generated!';
+                    document.getElementById('sync-status').innerHTML = 'In sync!';
+                    document.getElementById('sync-button').classList.remove('active');
+                    
+                    // Re-enable buttons
+                    document.getElementById('collaborate-btn').disabled = false;
+                    document.getElementById('sync-button').disabled = false;
+                    
+                    // Update harmony score
+                    currentHarmony = Math.min(currentHarmony + 25, 100);
+                    updateStats();
+                }, suggestions.length * 300 + 500);
+            }, 1500);
+            
+            updateStats();
+        }
+
+        function giveFeedback(type) {
+            const feedbackMessage = {
+                'love': 'Great! Keeping these suggestions...',
+                'adjust': 'Refining suggestions...',
+                'different': 'Generating alternatives...'
+            };
+            
+            document.getElementById('ai-status').textContent = feedbackMessage[type];
+            
+            setTimeout(() => {
+                if (type === 'love') {
+                    currentHarmony = Math.min(currentHarmony + 15, 100);
+                    updateStats();
+                } else {
+                    collaborate(); // Re-collaborate
+                }
+            }, 1000);
+        }
+
+        function updateStats() {
+            document.getElementById('harmony').textContent = currentHarmony + '%';
+            document.getElementById('ideas').textContent = ideasCombined;
+            document.getElementById('iterations').textContent = iterations;
+            document.getElementById('projects').textContent = projectsCompleted;
+        }
+
+        function finalize() {
+            projectsCompleted++;
+            updateStats();
+            
+            const aiCanvas = document.getElementById('ai-canvas');
+            aiCanvas.innerHTML = `
+                <div style="text-align: center; padding: 30px;">
+                    <div style="font-size: 2.5em; margin-bottom: 15px;">🎉</div>
+                    <div style="color: #6bcf7f; font-size: 1.1em; font-weight: bold; margin-bottom: 8px;">
+                        Perfect Collaboration!
+                    </div>
+                    <div style="color: #8892b0; font-size: 0.9em;">
+                        You and AI created an amazing party list together!<br>
+                        Neither could have done this alone.
+                    </div>
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <div style="color: #ffd93d;">Harmony: ${currentHarmony}%</div>
+                        <div style="color: #8892b0; margin-top: 3px; font-size: 0.85em;">Ideas Combined: ${ideasCombined}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('collaborate-btn').textContent = '🎊 Complete!';
+            document.getElementById('collaborate-btn').disabled = true;
+        }
+
+        function reset() {
+            userInputs = [];
+            iterations = 0;
+            ideasCombined = 0;
+            currentHarmony = 0;
+            
+            // Reset UI
+            document.getElementById('human-drop-zone').innerHTML = `
+                <div class="drop-zone-text" id="drop-zone-text">
+                    Drop your creative choices here!<br>
+                    <small>(Themes, constraints, vibes)</small>
+                </div>
+            `;
+            
+            document.getElementById('ai-canvas').innerHTML = `
+                <div class="canvas-placeholder">
+                    AI suggestions will appear here<br>
+                    <small>(Click the ⚡ button after adding your ideas!)</small>
+                </div>
+            `;
+            
+            document.querySelectorAll('.chip').forEach(chip => {
+                chip.classList.remove('used');
+            });
+            
+            document.getElementById('feedback-section').classList.add('hidden');
+            document.getElementById('finalize-btn').classList.add('hidden');
+            document.getElementById('collaborate-btn').disabled = true;
+            document.getElementById('collaborate-btn').textContent = '🎨 Create Together! (Or click ⚡ above)';
+            document.getElementById('sync-button').disabled = true;
+            document.getElementById('sync-button').classList.remove('active');
+            
+            document.getElementById('human-creativity').style.width = '0%';
+            document.getElementById('ai-creativity').style.width = '0%';
+            document.getElementById('ai-status').textContent = 'Waiting for input...';
+            document.getElementById('sync-status').innerHTML = 'Add ideas<br>to start';
+            
+            updateStats();
+        }
+    </script>
+</body>
+</html>

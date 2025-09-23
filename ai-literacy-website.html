@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn AI By Playing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(to bottom, #ffffff 0%, #fafafa 100%);
+            color: #1a1a1a;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Subtle dot pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(circle, #e0e0e0 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 80px 20px 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 80px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .logo-shape {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .logo-shape::before,
+        .logo-shape::after {
+            content: '';
+            position: absolute;
+            background: white;
+        }
+
+        .logo-shape::before {
+            width: 4px;
+            height: 24px;
+            top: 18px;
+            left: 22px;
+            border-radius: 2px;
+        }
+
+        .logo-shape::after {
+            width: 4px;
+            height: 24px;
+            top: 18px;
+            right: 22px;
+            border-radius: 2px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(3deg); }
+        }
+
+        h1 {
+            font-size: 3.2em;
+            font-weight: 200;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #666 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            color: #666;
+            font-weight: 300;
+        }
+
+        .games {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 80px;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 30px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #eee;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease backwards;
+        }
+
+        .game-card:nth-child(1) { animation-delay: 0.1s; }
+        .game-card:nth-child(2) { animation-delay: 0.2s; }
+        .game-card:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .game-card:nth-child(1)::before { background: linear-gradient(90deg, #6B73FF, #8B92FF); }
+        .game-card:nth-child(2)::before { background: linear-gradient(90deg, #FF6B9D, #FF8FAF); }
+        .game-card:nth-child(3)::before { background: linear-gradient(90deg, #4ECDC4, #6EDDD5); }
+
+        .game-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            border-color: transparent;
+        }
+
+        .game-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Custom icons for each game */
+        .game-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        /* AI Translator icon - chat bubbles */
+        .icon-translator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-translator::before,
+        .icon-translator::after {
+            content: '';
+            position: absolute;
+            border-radius: 20px;
+            background: #6B73FF;
+        }
+
+        .icon-translator::before {
+            width: 35px;
+            height: 35px;
+            left: 0;
+            background: #6B73FF;
+            opacity: 0.3;
+        }
+
+        .icon-translator::after {
+            width: 40px;
+            height: 40px;
+            right: 0;
+            background: #6B73FF;
+        }
+
+        /* Prompt Chef icon - layers */
+        .icon-chef {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .chef-layer {
+            height: 8px;
+            background: #FF6B9D;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .chef-layer:nth-child(1) { width: 100%; opacity: 0.4; }
+        .chef-layer:nth-child(2) { width: 80%; opacity: 0.6; }
+        .chef-layer:nth-child(3) { width: 60%; opacity: 1; }
+
+        .game-card:hover .chef-layer {
+            width: 100%;
+        }
+
+        /* Co-Creator icon - interlocking pieces */
+        .icon-cocreator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cocreator-piece {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 4px solid #4ECDC4;
+            border-radius: 50%;
+        }
+
+        .cocreator-piece:first-child {
+            left: 5px;
+        }
+
+        .cocreator-piece:last-child {
+            right: 5px;
+            border-color: #4ECDC4;
+            background: #4ECDC4;
+            opacity: 0.3;
+        }
+
+        .game-card:hover .cocreator-piece {
+            animation: merge 0.5s ease;
+        }
+
+        @keyframes merge {
+            50% { transform: translateX(0) scale(1.1); }
+        }
+
+        .game-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .game-description {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .game-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .game-time {
+            color: #999;
+            font-size: 0.85em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .time-icon {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            position: relative;
+            display: inline-block;
+        }
+
+        .time-icon::before,
+        .time-icon::after {
+            content: '';
+            position: absolute;
+            background: #ccc;
+            top: 50%;
+            left: 50%;
+            transform-origin: bottom;
+        }
+
+        .time-icon::before {
+            width: 2px;
+            height: 5px;
+            transform: translate(-50%, -100%);
+        }
+
+        .time-icon::after {
+            width: 2px;
+            height: 4px;
+            transform: translate(-50%, -100%) rotate(90deg);
+        }
+
+        .game-arrow {
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s ease;
+            color: #999;
+            font-weight: 300;
+            font-size: 1.5em;
+        }
+
+        .game-card:hover .game-arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Progress section */
+        .progress-section {
+            text-align: center;
+            margin: 60px 0;
+            padding: 40px;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #eee;
+        }
+
+        .progress-title {
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .progress-bar {
+            max-width: 300px;
+            height: 4px;
+            background: #f0f0f0;
+            border-radius: 2px;
+            margin: 0 auto;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6B73FF, #FF6B9D, #4ECDC4);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 2px;
+        }
+
+        /* Report section */
+        .report-section {
+            background: white;
+            border-radius: 20px;
+            padding: 60px;
+            margin: 80px 0 40px;
+            border: 1px solid #eee;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.03) 0%, transparent 70%);
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .report-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .report-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 25px;
+            position: relative;
+        }
+
+        .report-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px;
+            height: 100%;
+        }
+
+        .bar {
+            width: 8px;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 2px;
+            animation: barGrow 1s ease backwards;
+        }
+
+        .bar:nth-child(1) { height: 40%; animation-delay: 0.1s; }
+        .bar:nth-child(2) { height: 70%; animation-delay: 0.2s; }
+        .bar:nth-child(3) { height: 55%; animation-delay: 0.3s; }
+        .bar:nth-child(4) { height: 85%; animation-delay: 0.4s; }
+        .bar:nth-child(5) { height: 60%; animation-delay: 0.5s; }
+
+        @keyframes barGrow {
+            from { transform: scaleY(0); }
+            to { transform: scaleY(1); }
+        }
+
+        .report-title {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            font-weight: 300;
+        }
+
+        .report-description {
+            color: #666;
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .report-button {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1em;
+        }
+
+        .report-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .footer a {
+            color: #666;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: #1a1a1a;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .close-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border: 2px solid #eee;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1001;
+            color: #666;
+        }
+
+        .close-icon {
+            width: 20px;
+            height: 20px;
+            position: relative;
+        }
+
+        .close-icon::before,
+        .close-icon::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: #666;
+            top: 50%;
+            left: 0;
+            transition: all 0.3s ease;
+        }
+
+        .close-icon::before {
+            transform: translateY(-50%) rotate(45deg);
+        }
+
+        .close-icon::after {
+            transform: translateY(-50%) rotate(-45deg);
+        }
+
+        .close-button:hover {
+            background: #f5f5f5;
+            transform: rotate(90deg);
+            border-color: #ddd;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2em;
+            }
+            
+            .container {
+                padding: 40px 20px;
+            }
+
+            .header {
+                margin-bottom: 50px;
+            }
+
+            .games {
+                grid-template-columns: 1fr;
+            }
+
+            .report-section {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-shape"></div>
+            </div>
+            <h1>Learn AI by Playing</h1>
+            <p class="subtitle">Three games. Fifteen minutes. Zero confusion.</p>
+        </div>
+
+        <div class="games">
+            <div class="game-card" onclick="openGame('translator', 1)">
+                <div class="game-icon icon-translator"></div>
+                <h2 class="game-title">AI Translator</h2>
+                <p class="game-description">
+                    Help confused customers understand what AI actually does. Turn fear into understanding.
+                </p>
+                <div class="game-meta">
+                    <span class="game-time">
+                        <span class="time-icon"></span>
+                        5 minutes
+                    </span>
+                    <span class="game-arrow">→</span>
+                </div>
+            </div>
+
+            <div class="game-card" onclick="openGame('chef', 2)">
+                <div class="game-icon icon-chef">
+                    <div class="chef-layer"></div>
+                    <div class="chef-layer"></div>
+                    <div class="chef-layer"></div>
+                </div>
+                <h2 class="game-title">Prompt Chef</h2>
+                <p class="game-description">
+                    Cook up perfect AI prompts like recipes. Learn what makes AI responses delicious.
+                </p>
+                <div class="game-meta">
+                    <span class="game-time">
+                        <span class="time-icon"></span>
+                        5 minutes
+                    </span>
+                    <span class="game-arrow">→</span>
+                </div>
+            </div>
+
+            <div class="game-card" onclick="openGame('cocreator', 3)">
+                <div class="game-icon icon-cocreator">
+                    <div class="cocreator-piece"></div>
+                    <div class="cocreator-piece"></div>
+                </div>
+                <h2 class="game-title">Co-Creator</h2>
+                <p class="game-description">
+                    Design amazing things with AI as your partner. Neither of you could do this alone.
+                </p>
+                <div class="game-meta">
+                    <span class="game-time">
+                        <span class="time-icon"></span>
+                        5 minutes
+                    </span>
+                    <span class="game-arrow">→</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-title">Your Progress</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div class="report-content">
+                <div class="report-icon">
+                    <div class="report-bars">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                </div>
+                <h2 class="report-title">See why we're building this</h2>
+                <p class="report-description">
+                    We analyzed the entire AI literacy landscape. Most tools are boring, overwhelming, or wrong. 
+                    Games change everything.
+                </p>
+                <button class="report-button" onclick="toggleReport()">
+                    View Research Report
+                </button>
+                
+                <div id="report-embed" style="display: none; margin-top: 40px; text-align: left;">
+                    <iframe src="your-report.html" style="width: 100%; height: 600px; border: 1px solid #eee; border-radius: 12px; background: white;"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Built with care to make AI accessible to everyone</p>
+            <div style="margin-top: 15px;">
+                <a href="#">Twitter</a>
+                <a href="#">GitHub</a>
+                <a href="mailto:">Contact</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Modal -->
+    <div id="gameModal" class="modal">
+        <div class="modal-content">
+            <button class="close-button" onclick="closeGame()">
+                <span class="close-icon"></span>
+            </button>
+            <iframe id="gameFrame" src=""></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Track completed games
+        let completedGames = JSON.parse(localStorage.getItem('completedGames') || '[]');
+        
+        // Update progress
+        function updateProgress() {
+            const progressFill = document.getElementById('progress-fill');
+            const percentage = (completedGames.length / 3) * 100;
+            progressFill.style.width = percentage + '%';
+        }
+
+        updateProgress();
+
+        // Open game
+        function openGame(gameType, gameNumber) {
+            const modal = document.getElementById('gameModal');
+            const frame = document.getElementById('gameFrame');
+            
+            // Track game start
+            if (!completedGames.includes(gameNumber)) {
+                completedGames.push(gameNumber);
+                localStorage.setItem('completedGames', JSON.stringify(completedGames));
+                updateProgress();
+            }
+            
+            // Game URLs (update these to actual paths)
+            const gameUrls = {
+                'translator': 'ai-translation-game.html',
+                'chef': 'prompt-chef-game.html',
+                'cocreator': 'ai-co-creator-game.html'
+            };
+            
+            // For demo - shows loading state then placeholder
+            frame.src = 'about:blank';
+            frame.onload = function() {
+                if (frame.src.includes('about:blank')) {
+                    frame.contentDocument.body.innerHTML = `
+                        <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: system-ui; text-align: center;">
+                            <div style="animation: fadeIn 0.5s ease;">
+                                <p style="color: #666; font-size: 1.2em;">Loading ${gameUrls[gameType]}</p>
+                            </div>
+                        </div>
+                        <style>
+                            @keyframes fadeIn {
+                                from { opacity: 0; transform: scale(0.9); }
+                                to { opacity: 1; transform: scale(1); }
+                            }
+                        </style>
+                    `;
+                }
+            };
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close game
+        function closeGame() {
+            const modal = document.getElementById('gameModal');
+            const frame = document.getElementById('gameFrame');
+            
+            modal.style.display = 'none';
+            frame.src = 'about:blank';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Toggle report
+        function toggleReport() {
+            const embed = document.getElementById('report-embed');
+            const button = document.querySelector('.report-button');
+            
+            if (embed.style.display === 'none') {
+                embed.style.display = 'block';
+                button.textContent = 'Hide Report';
+                // Smooth scroll to report
+                embed.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                embed.style.display = 'none';
+                button.textContent = 'View Research Report';
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeGame();
+            }
+        });
+
+        // Close on background click
+        document.getElementById('gameModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeGame();
+            }
+        });
+    </script>
+</body>
+</html>
